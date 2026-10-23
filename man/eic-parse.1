@@ -1,0 +1,73 @@
+.TH EIC\-PARSE 1 "2026-10-22" "ec2-instance-connect-rh 0.0.1"
+.SH NAME
+eic\-parse \- verify EC2 Instance Connect signer chain and SSH keys
+.SH SYNOPSIS
+.B eic\-parse
+.B \-p
+.I keys_path
+.B \-d
+.I tmpdir
+.B \-s
+.I signer_path
+.B \-i
+.I instance_id
+.B \-c
+.I expected_cn
+.B \-a
+.I ca_path
+.B \-v
+.I ocsp_dir
+.RB [ \-f
+.IR fingerprint ]
+.SH DESCRIPTION
+.B eic\-parse
+verifies the EC2 Instance Connect signer certificate trust chain and OCSP
+revocation status, then validates each SSH key's signature, timestamp, and
+instance ID.
+Valid keys are printed to stdout for
+.BR sshd (8)
+to consume.
+.PP
+The command is normally called in\-process by
+.BR eic\-curl (1)
+but can also be run standalone via its CLI interface.
+.SH OPTIONS
+.TP
+.BI \-p " keys_path"
+Path to the file containing signed SSH keys.
+.TP
+.BI \-d " tmpdir"
+Temporary directory for intermediate files.
+.TP
+.BI \-s " signer_path"
+Path to the PEM file containing the signer certificate chain.
+.TP
+.BI \-i " instance_id"
+Current EC2 instance ID (e.g., i\-1234567890abcdef0).
+.TP
+.BI \-c " expected_cn"
+Expected Common Name of the signer certificate.
+.TP
+.BI \-a " ca_path"
+Path to the CA bundle or CA directory.
+.TP
+.BI \-v " ocsp_dir"
+Directory containing OCSP staple response files.
+.TP
+.BI \-f " fingerprint"
+Optional SSH key fingerprint to match against.
+.SH EXIT CODES
+.TP
+.B 0
+Valid keys found and printed.
+.TP
+.B 1
+Validation or trust\-chain failure.
+.TP
+.B 255
+No valid keys found.
+.SH SEE ALSO
+.BR eic\-run (1),
+.BR eic\-curl (1),
+.BR sshd (8),
+.BR openssl\-verify (1)

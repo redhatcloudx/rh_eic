@@ -1,0 +1,39 @@
+.TH EIC\-RUN 1 "2026-10-22" "ec2-instance-connect-rh 0.0.1"
+.SH NAME
+eic\-run \- AuthorizedKeysCommand entry point for EC2 Instance Connect
+.SH SYNOPSIS
+.B eic\-run
+.I username
+.RI [ fingerprint ]
+.SH DESCRIPTION
+.B eic\-run
+is invoked by
+.BR sshd (8)
+as an
+.B AuthorizedKeysCommand
+helper.
+It validates the username, then launches
+.B eic\-curl
+as a subprocess with a 5\-second timeout.
+.PP
+The command is not intended to be run interactively.
+It is configured via the sshd drop\-in at
+.IR /etc/ssh/sshd_config.d/60\-ec2\-instance\-connect.conf .
+.SH EXIT CODES
+.TP
+.B 0
+Keys printed to stdout, or soft skip (missing user, non\-EC2 instance).
+.TP
+.B 1
+Validation or trust\-chain failure.
+.TP
+.B 124
+Subprocess timed out (5 seconds).
+.TP
+.B 255
+IMDS/protocol error, or no valid keys found.
+.SH SEE ALSO
+.BR eic\-curl (1),
+.BR eic\-parse (1),
+.BR sshd (8),
+.BR sshd_config (5)

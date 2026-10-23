@@ -1,0 +1,33 @@
+.TH EIC\-CURL 1 "2026-10-22" "ec2-instance-connect-rh 0.0.1"
+.SH NAME
+eic\-curl \- fetch EC2 Instance Connect keys and metadata from IMDS
+.SH SYNOPSIS
+.B eic\-curl
+.I username
+.RI [ fingerprint ]
+.SH DESCRIPTION
+.B eic\-curl
+is called by
+.BR eic\-run (1).
+It communicates with the EC2 Instance Metadata Service (IMDS) to retrieve
+an IMDSv2 token, the instance identity, the signer certificate, OCSP
+staples, and SSH public keys.
+After fetching all data, it invokes
+.BR eic\-parse (1)
+in\-process to verify and output valid keys.
+.PP
+The command is not intended to be run interactively.
+.SH EXIT CODES
+.TP
+.B 0
+Keys printed to stdout, or soft skip (missing user, non\-EC2 instance).
+.TP
+.B 1
+Certificate or key fetch failure.
+.TP
+.B 255
+IMDS/protocol error.
+.SH SEE ALSO
+.BR eic\-run (1),
+.BR eic\-parse (1),
+.BR sshd (8)

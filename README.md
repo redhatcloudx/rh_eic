@@ -36,6 +36,28 @@ Use a Copr chroot that matches the instance (for RHEL 10 x86_64, builds for
 the AWS console or `aws ec2-instance-connect ssh --instance-id=<instance ID>`.
 
 
+## Building
+
+### Source tarball
+
+```bash
+python3 -m build --sdist
+```
+
+This produces `dist/ec2_instance_connect_rh-0.0.1.tar.gz`, which is
+the `Source0` expected by the spec file.
+
+### RPM (local mock build)
+
+```bash
+python3 -m build --sdist
+cp dist/ec2_instance_connect_rh-0.0.1.tar.gz ~/rpmbuild/SOURCES/
+rpmbuild -bs ec2-instance-connect-rh.spec
+mock rebuild ~/rpmbuild/SRPMS/ec2-instance-connect-rh-*.src.rpm
+```
+
+
+
 ## Project layout
 
 ```
@@ -61,6 +83,20 @@ tests/
 | 1    | EXIT_FAILURE   | Validation or trust-chain failure                  |
 | 124  | EXIT_TIMEOUT   | eic-run subprocess timed out (5s)                  |
 | 255  | EXIT_ERROR     | IMDS/protocol error, or no valid keys found        |
+
+## Troubleshooting
+
+### "Unsafe AuthorizedKeysCommand … bad ownership or modes for directory /"
+
+OpenSSH refuses to run any `AuthorizedKeysCommand` if a directory in the
+path is group- or world-writable. Some Fedora cloud images ship `/` with
+mode `0775`. Fix with:
+
+```bash
+sudo chmod 0755 /
+sudo systemctl restart sshd
+```
+
 
 ## License
 

@@ -1,5 +1,6 @@
 include conf/60-ec2-instance-connect.conf
 include LICENSE
 include README.md
+recursive-include man *.1
 recursive-include selinux *.te *.fc *.if
 recursive-include tests *.py

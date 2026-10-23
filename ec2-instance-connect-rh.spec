@@ -14,7 +14,8 @@ Release:        %autorelease
 Summary:        EC2 Instance Connect for RHEL and Fedora
 
 License:        Apache-2.0
-URL:            https://github.com/.../%{pkgname}
+URL:            https://github.com/redhatcloudx/rh_eic
+# to build tarball: python3 -m build --sdist
 Source0:        %{srcname}-%{version}.tar.gz
 
 BuildArch:      noarch
@@ -27,12 +28,12 @@ BuildRequires:  openssh-clients
 BuildRequires:  selinux-policy-devel
 Requires:       python%{python3_pkgversion}
 Requires:       openssh-server
+Requires:       openssh-clients
 Requires:       openssl
 Requires:       ca-certificates
 Requires(pre):  shadow-utils
 Requires(post): systemd
 Requires(preun): systemd
-Requires(postun): shadow-utils
 %if 0%{?with_selinux}
 Requires:       (%{name}-selinux if selinux-policy-%{selinuxtype})
 %endif
@@ -50,6 +51,7 @@ runs in the eic_t domain.
 %package selinux
 Summary:        SELinux policy for %{name}
 BuildArch:      noarch
+Requires:       %{name} = %{version}-%{release}
 Requires:       selinux-policy-%{selinuxtype}
 Requires(post): selinux-policy-%{selinuxtype}
 %{?selinux_requires_min}
@@ -84,9 +86,9 @@ bzip2 -9 selinux/%{modulename}.pp
 install -D -p -m 0644 conf/60-ec2-instance-connect.conf \
     %{buildroot}%{_sysconfdir}/ssh/sshd_config.d/60-ec2-instance-connect.conf
 
-mkdir -p %{buildroot}%{_sysconfdir}/systemd/system/sshd.service.d
-ln -s /dev/null \
-    %{buildroot}%{_sysconfdir}/systemd/system/sshd.service.d/ec2-instance-connect.conf
+install -D -p -m 0644 man/eic-run.1 %{buildroot}%{_mandir}/man1/eic-run.1
+install -D -p -m 0644 man/eic-curl.1 %{buildroot}%{_mandir}/man1/eic-curl.1
+install -D -p -m 0644 man/eic-parse.1 %{buildroot}%{_mandir}/man1/eic-parse.1
 
 %if 0%{?with_selinux}
 install -D -m 0644 selinux/%{modulename}.pp.bz2 \
@@ -102,7 +104,7 @@ install -D -p -m 0644 selinux/%{modulename}.if \
 
 %pre
 getent passwd ec2-instance-connect >/dev/null || \
-    useradd -r -M -s %{_sbindir}/nologin -d %{_tmppath} ec2-instance-connect
+    useradd -r -M -s %{_sbindir}/nologin -d / ec2-instance-connect
 usermod -L ec2-instance-connect >/dev/null 2>&1 || :
 
 
@@ -128,13 +130,10 @@ fi
 
 
 %postun
-if [ "$1" -eq 0 ]; then
-    userdel ec2-instance-connect >/dev/null 2>&1 || :
-    if [ -x /usr/bin/systemctl ]; then
-        systemctl daemon-reload >/dev/null 2>&1 || :
-        if systemctl is-active --quiet sshd; then
-            systemctl try-restart sshd.service >/dev/null 2>&1 || :
-        fi
+if [ "$1" -eq 0 ] && [ -x /usr/bin/systemctl ]; then
+    systemctl daemon-reload >/dev/null 2>&1 || :
+    if systemctl is-active --quiet sshd; then
+        systemctl try-restart sshd.service >/dev/null 2>&1 || :
     fi
 fi
 
@@ -175,15 +174,19 @@ fi
 %{_bindir}/eic-run
 %{_bindir}/eic-curl
 %{_bindir}/eic-parse
+%{_mandir}/man1/eic-run.1*
+%{_mandir}/man1/eic-curl.1*
+%{_mandir}/man1/eic-parse.1*
 %config(noreplace) %{_sysconfdir}/ssh/sshd_config.d/60-ec2-instance-connect.conf
-%{_sysconfdir}/systemd/system/sshd.service.d/ec2-instance-connect.conf
 
 
 %if 0%{?with_selinux}
 %files selinux
+%license LICENSE
+%doc README.md
 %{_datadir}/selinux/packages/%{selinuxtype}/%{modulename}.pp.*
 %{_datadir}/selinux/devel/include/distributed/%{modulename}.if
-%ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
+%ghost %attr(0644,root,root) %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 %endif
 
 

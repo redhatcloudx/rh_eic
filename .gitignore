@@ -8,3 +8,6 @@ selinux/tmp/
 *.pp.bz2
 *.egg
 results/
+*.src.rpm
+*.log
+ec2-instance-connect-rh/
